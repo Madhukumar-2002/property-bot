@@ -1,0 +1,31 @@
+{
+  "object": "page",
+  "entry": [
+    {
+      "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "1234567890",
+              "phone_number_id": "884949134712820"
+            },
+            "messages": [
+              {
+                "from": "919876543210",
+                "id": "wamid.abc123",
+                "timestamp": "1234567890",
+                "type": "text",
+                "text": {
+                  "body": "hi"
+                }
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}
