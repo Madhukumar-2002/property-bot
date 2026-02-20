@@ -1,27 +1,37 @@
-# TODO: Fix WhatsApp Webhook 500 Error
+# WhatsApp Auto-Reply Bot Deployment TODO
 
-## Problem
-- ngrok tunnel is working
-- Meta is sending POST /webhook
-- Server keeps returning 500 Internal Server Error
-- Root cause: Webhook code crashes when trying to access/save user data in MongoDB
+## Deployment Steps
 
-## Solution Plan
-1. [x] Read and understand the current server.js implementation
-2. [x] Read and understand the User model
-3. [x] Modify /webhook POST handler to skip MongoDB temporarily
-4. [x] Test the webhook to confirm it works ✅
-5. [x] After confirming, re-enable MongoDB operations (optional - disabled for now)
+### Step 1: Security Enhancement ✅
+- [x] Move WhatsApp credentials to environment variables
+- [x] Update application.properties to use placeholder values
+- [x] Create application-prod.properties for production
 
-## Implementation
-- Comment out MongoDB operations (User.findOne, User.create, user.save)
-- Keep message logging functionality to confirm webhook receives messages
-- Add proper error handling
-- Always return 200 OK to Meta to prevent re-sending
+### Step 2: Git Setup
+- [ ] Check git status
+- [ ] Initialize git if needed
+- [ ] Add all files to staging
+- [ ] Commit with message "Added auto reply"
 
-## Changes Made
-- Modified: server.js - /webhook POST handler
-  - Now returns 200 OK immediately to prevent Meta re-sending
-  - Processes message in background
-  - Try-catch with graceful error handling for API failures
-  - Logs warnings instead of crashing
+### Step 3: GitHub Integration
+- [ ] Check remote repository configuration
+- [ ] Add GitHub remote if not present
+- [ ] Push to GitHub main branch
+
+### Step 4: Railway Deployment
+- [ ] Configure environment variables in Railway dashboard
+- [ ] Deploy from GitHub
+- [ ] Verify deployment logs
+
+### Step 5: Testing
+- [ ] Send test message "Hi" to WhatsApp number
+- [ ] Verify "AI Reply: Hi" response received
+
+## Environment Variables Required
+- `WHATSAPP_TOKEN` - Meta WhatsApp API access token
+- `WHATSAPP_PHONE_ID` - WhatsApp phone number ID
+
+## Notes
+- Webhook verification token: `my_verify_token`
+- Webhook endpoint: `POST /webhook` and `GET /webhook`
+- Server port: 8080
