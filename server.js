@@ -9,7 +9,16 @@ app.use(express.urlencoded({ extended: true }));
 const axios = require("axios");
 const mongoose = require("mongoose");
 const ExcelJS = require("exceljs");
-const User = require("./models/user");
+
+// Try to load User model, but make it optional to prevent deployment crashes
+let User;
+try {
+  User = require("./models/user");
+  console.log("✅ User model loaded successfully");
+} catch (err) {
+  console.log("⚠️ User model not found - Excel export will be disabled");
+  User = null;
+}
 
 
 // ================= CONFIG =================
@@ -238,6 +247,14 @@ app.post("/webhook", async (req, res) => {
 // ================= EXPORT TO EXCEL =================
 app.get("/export-excel", async (req, res) => {
   try {
+    // Check if User model is available
+    if (!User) {
+      return res.status(503).json({ 
+        error: "User model not available", 
+        message: "Please ensure models/user.js is properly deployed" 
+      });
+    }
+    
     const users = await User.find({});
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Leads");
