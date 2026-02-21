@@ -37,7 +37,7 @@ mongoose
   .catch((err) => console.log("❌ MongoDB error:", err.message));
 
 // ================= HEALTH CHECK =================
-app.get("/", (req, res) => res.send("✅ Property Bot Server is running"));
+app.get("/", (req, res) => res.send("🚀 Property Bot Server is Running Successfully!"));
 app.get("/health", (req, res) => res.status(200).json({ status: "UP" }));
 
 // ================= VERIFY WEBHOOK =================
