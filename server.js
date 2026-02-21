@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 const axios = require("axios");
 const mongoose = require("mongoose");
 const ExcelJS = require("exceljs");
-const User = require("./models/user");
+const User = require("./models/User");
 
 
 // ================= CONFIG =================
