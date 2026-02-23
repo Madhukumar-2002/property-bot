@@ -1,6 +1,34 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const axios = require("axios");
 require("dotenv").config();
+
+// WhatsApp Message Sending Function
+const sendWhatsAppMessage = async (to, text) => {
+    try {
+        await axios.post(
+            `https://graph.facebook.com/v22.0/${process.env.WHATSAPP_PHONE_ID}/messages`,
+            {
+                messaging_product: "whatsapp",
+                to: to,
+                text: { body: text },
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        console.log("✅ Reply sent!");
+    } catch (error) {
+        console.error("❌ Error sending reply:", error.response?.data || error.message);
+    }
+};
+
+// WhatsApp Webhook Verify Token - READ FROM ENVIRONMENT VARIABLE
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+console.log("🔐 VERIFY_TOKEN loaded from env:", VERIFY_TOKEN);
 
 const app = express();
 app.use(express.json());
@@ -64,6 +92,64 @@ connectToMongoDB();
 ========================== */
 app.get("/", (req, res) => {
     res.send("🚀 Property Bot Server Running Successfully!");
+});
+
+/* ==========================
+   WhatsApp Webhook Routes
+========================== */
+
+// GET webhook - for Meta verification
+app.get("/webhook", (req, res) => {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+
+    console.log("📥 Webhook verification request:");
+    console.log("  - Mode:", mode);
+    console.log("  - Token from Meta:", token);
+    console.log("  - Our VERIFY_TOKEN:", VERIFY_TOKEN);
+    console.log("  - Match:", token === VERIFY_TOKEN);
+
+    if (mode === "subscribe" && token === VERIFY_TOKEN) {
+        console.log("✅ Webhook Verified Successfully!");
+        res.status(200).send(challenge);
+    } else {
+        console.log("❌ Webhook Verification Failed!");
+        res.status(403).send("Verification failed");
+    }
+});
+
+// POST webhook - for receiving WhatsApp messages
+app.post("/webhook", (req, res) => {
+    const body = req.body;
+    
+    console.log("📩 Webhook Received:", JSON.stringify(body, null, 2));
+    
+    // Check if this is a WhatsApp message
+    if (body.object === "whatsapp_business_account") {
+        const entries = body.entry || [];
+        
+        for (const entry of entries) {
+            const changes = entry.changes || [];
+            for (const change of changes) {
+                const messages = change.value?.messages || [];
+                for (const message of messages) {
+                    const from = message.from;
+                    const text = message.text?.body;
+
+                    console.log("💬 Message from:", from);
+                    console.log("📝 Message:", text);
+
+                    // AUTO REPLY
+                    sendWhatsAppMessage(from, "Hello 👋 Property Bot here! How can I help you?");
+                }
+            }
+        }
+        
+        res.status(200).send("OK");
+    } else {
+        res.status(404).send("Not Found");
+    }
 });
 
 
