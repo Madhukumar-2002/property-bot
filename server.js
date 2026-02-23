@@ -55,32 +55,26 @@ const connectToMongoDB = async () => {
         
         if (err.message && err.message.includes("bad auth")) {
             console.error("\n→ Authentication failed! Please check:");
-            console.error("\n1. Username is correct (kumarmadhu6958_db_user)");
-            console.error("\n2. Password is correct - NOT the placeholder <db_password>");
+            console.error("\n1. Username is correct");
+            console.error("\n2. Password is correct");
             console.error("\n3. IP address is whitelisted in MongoDB Atlas\n");
-            
-            // In production, retry every 10 seconds instead of crashing
-            if (process.env.NODE_ENV === 'production') {
-                setTimeout(connectToMongoDB, 10000);
-                return;
-            }
-        } else if (err.message && (err.message.includes('ENOTFOUND') || err.message.includes('getaddrinfo'))) {
-             // In production, retry every 10 seconds instead of crashing  
-             if(process.env.NODE_ENV === 'production'){
-                 setTimeout(connectToMongoDB,10000); 
-                 return; 
-             }
-             
-         }
+        }
+        
+        // In production, retry every 10 seconds instead of crashing - KEEP SERVER RUNNING
+        if (process.env.NODE_ENV === 'production') {
+            console.log("🔄 Retrying MongoDB connection in 10 seconds...");
+            setTimeout(connectToMongoDB, 10000);
+            return;
+        }
 
-         // For local development without valid credentials we just log and continue so user can test other things:
-         process.exit(1); 
-
+        // For local development without valid credentials we just log and continue:
+        console.log("⚠️ Continuing without MongoDB connection...");
      }
 };
 
 // Handle disconnection - attempt reconnect in production 
 mongoose.connection.on('disconnected', () => { 
+    console.log("⚠️ MongoDB disconnected - attempting reconnect...");
 }); 
 
 // Initial connection attempt  
