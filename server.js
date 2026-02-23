@@ -177,6 +177,45 @@ app.post("/webhook", (req, res) => {
 });
 
 
+// ================= EXOTEL VOICE BOT =================
+
+app.post("/exotel-voice", async (req, res) => {
+  const caller = req.body.From || "Customer";
+
+  console.log("📞 Incoming Voice Call From:", caller);
+
+  // First AI question
+  const responseXML = `
+<Response>
+    <Say voice="female" language="en-IN">
+        Hello! Welcome to Property Solutions.
+        Are you looking to buy or rent a property?
+        Please say Buy or Rent after the beep.
+    </Say>
+    <Record timeout="5" maxLength="5" action="/process-voice" />
+</Response>`;
+
+  res.type("text/xml");
+  res.send(responseXML);
+});
+
+// ================= VOICE PROCESSING API =================
+
+app.post("/process-voice", async (req, res) => {
+  console.log("🎤 Voice Recording URL:", req.body.RecordingUrl);
+
+  const responseXML = `
+<Response>
+    <Say voice="female" language="en-IN">
+        Thank you. Our property expert will contact you soon.
+        Have a great day!
+    </Say>
+</Response>`;
+
+  res.type("text/xml");
+  res.send(responseXML);
+});
+
 /* ==========================
    PORT FIX (VERY IMPORTANT)
 ========================== */
