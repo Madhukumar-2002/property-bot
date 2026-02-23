@@ -129,13 +129,43 @@ app.post("/webhook", (req, res) => {
                 const messages = change.value?.messages || [];
                 for (const message of messages) {
                     const from = message.from;
-                    const text = message.text?.body;
+                    const text = message.text?.body.toLowerCase().trim();
 
                     console.log("💬 Message from:", from);
                     console.log("📝 Message:", text);
 
-                    // AUTO REPLY
-                    sendWhatsAppMessage(from, "Hello 👋 Property Bot here! How can I help you?");
+                    // ✅ STEP 1 — PROPERTY FLOW WELCOME MESSAGE
+                    const welcomeMessage = 
+                        "🏠 *Welcome to Property Solutions Bot!* \n\n" +
+                        "I can help you with:\n\n" +
+                        "1️⃣ Buy Property\n" +
+                        "2️⃣ Rent Property\n" +
+                        "3️⃣ Sell Property\n" +
+                        "4️⃣ Talk to Agent\n\n" +
+                        "👉 Please reply with a number (1-4)";
+
+                    // 🚀 STEP 2 — CHAT FLOW LOGIC
+                    let replyMessage;
+                    
+                    if (text === "1") {
+                        replyMessage = "🏡 Great! You want to BUY property.\n\nPlease tell me:\nCity + Budget";
+                    }
+                    else if (text === "2") {
+                        replyMessage = "🏠 You want RENT property.\n\nSend:\nCity + Monthly Rent Budget";
+                    }
+                    else if (text === "3") {
+                        replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
+                    }
+                    else if (text === "4") {
+                        replyMessage = "👨‍💼 Our agent will contact you soon.\n\nPlease share your name.";
+                    }
+                    else {
+                        // Default welcome message for new users or invalid input
+                        replyMessage = welcomeMessage;
+                    }
+
+                    // Send the appropriate reply
+                    sendWhatsAppMessage(from, replyMessage);
                 }
             }
         }
