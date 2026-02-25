@@ -83,14 +83,16 @@ const connectToAgent = async (userPhone) => {
 // ================= VAPI.AI AI AGENT CONFIGURATION =================
 const connectToAIAgent = async (userPhone) => {
     try {
-        console.log(`🤖 Calling AI Agent for ${userPhone}`);
+        // Convert to E.164 format (+91 for India)
+        const formattedPhone = "+91" + userPhone.replace(/^91/, "");
+        console.log(`🤖 Calling AI Agent for ${formattedPhone}`);
 
         const response = await axios.post(
             "https://api.vapi.ai/call",
             {
                 assistantId: process.env.VAPI_ASSISTANT_ID,
                 customer: {
-                    number: userPhone
+                    number: formattedPhone
                 }
             },
             {
