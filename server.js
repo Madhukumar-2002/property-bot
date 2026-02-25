@@ -91,6 +91,7 @@ const connectToAIAgent = async (userPhone) => {
             "https://api.vapi.ai/call",
             {
                 assistantId: process.env.VAPI_ASSISTANT_ID,
+                phoneNumber: "+12408506128",
                 customer: {
                     number: formattedPhone
                 }
