@@ -30,6 +30,85 @@ const sendWhatsAppMessage = async (to, text) => {
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 console.log("🔐 VERIFY_TOKEN loaded from env:", VERIFY_TOKEN);
 
+// ================= EXOTEL CONFIGURATION =================
+// Default values from Exotel Dashboard - can be overridden in Railway Variables
+const EXOTEL_SID = process.env.EXOTEL_SID || "propertysolutionsbot1";
+const EXOTEL_API_KEY = process.env.EXOTEL_API_KEY || "306a874ce5f368be87ac85da895e3e27c59b642db4c6abde";
+const EXOTEL_API_TOKEN = process.env.EXOTEL_API_TOKEN || "490e332016c4f97cced11b12d4c3235da57d22b6af27e890";
+const EXOTEL_NUMBER = process.env.EXOTEL_NUMBER || "08047280067";
+// Agent number - set in Railway Variables or use default
+const AGENT_NUMBER = process.env.AGENT_NUMBER || "9876543210";
+
+console.log("📞 Exotel SID:", EXOTEL_SID);
+console.log("📞 Exotel Number:", EXOTEL_NUMBER);
+console.log("📞 Agent Number:", AGENT_NUMBER || "NOT SET - Please set AGENT_NUMBER in Railway");
+
+// Function to connect user to agent via Exotel Click-to-Call
+const connectToAgent = async (userPhone) => {
+    if (!AGENT_NUMBER) {
+        console.error("❌ AGENT_NUMBER not configured!");
+        return { success: false, error: "Agent number not configured" };
+    }
+
+    try {
+        console.log(`📞 Initiating click-to-call: User ${userPhone} -> Agent ${AGENT_NUMBER}`);
+        
+        const auth = Buffer.from(`${EXOTEL_API_KEY}:${EXOTEL_API_TOKEN}`).toString('base64');
+        
+        const response = await axios.post(
+            `https://api.exotel.com/v1/Accounts/${EXOTEL_SID}/Calls/connect.json`,
+            {
+                From: userPhone,
+                To: AGENT_NUMBER,
+                CallerId: EXOTEL_NUMBER,
+                TimeOut: 30,
+                Priority: "high"
+            },
+            {
+                headers: {
+                    Authorization: `Basic ${auth}`,
+                    "Content-Type": "application/x-www-form-urlencoded"
+                }
+            }
+        );
+        
+        console.log("✅ Call initiated successfully:", response.data);
+        return { success: true, data: response.data };
+    } catch (error) {
+        console.error("❌ Error connecting to agent:", error.response?.data || error.message);
+        return { success: false, error: error.message };
+    }
+};
+
+// ================= VAPI.AI AI AGENT CONFIGURATION =================
+const connectToAIAgent = async (userPhone) => {
+    try {
+        console.log(`🤖 Calling AI Agent for ${userPhone}`);
+
+        const response = await axios.post(
+            "https://api.vapi.ai/call",
+            {
+                assistantId: process.env.VAPI_ASSISTANT_ID,
+                customer: {
+                    number: userPhone
+                }
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.VAPI_API_KEY}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        console.log("✅ AI Call Started:", response.data);
+        return { success: true };
+    } catch (error) {
+        console.error("❌ AI Call Error:", error.response?.data || error.message);
+        return { success: false };
+    }
+};
+
 const app = express();
 app.use(express.json());
 
@@ -114,7 +193,7 @@ app.get("/webhook", (req, res) => {
 });
 
 // POST webhook - for receiving WhatsApp messages
-app.post("/webhook", (req, res) => {
+app.post("/webhook", async (req, res) => {
     const body = req.body;
     
     console.log("📩 Webhook Received:", JSON.stringify(body, null, 2));
@@ -157,7 +236,16 @@ app.post("/webhook", (req, res) => {
                         replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
                     }
                     else if (text === "4") {
-                        replyMessage = "👨‍💼 Our agent will contact you soon.\n\nPlease share your name.";
+                        // 🚀 TALK TO AGENT - Connect to AI Agent via Vapi.ai
+                        console.log(`🤖 User requested AI agent. Phone: ${from}`);
+
+                        const callResult = await connectToAIAgent(from);
+
+                        if (callResult.success) {
+                            replyMessage = "🤖 Our AI property expert is calling you now. Please answer the call.";
+                        } else {
+                            replyMessage = "⚠️ Unable to connect AI agent. Please try again later.";
+                        }
                     }
                     else {
                         // Default welcome message for new users or invalid input
@@ -177,25 +265,26 @@ app.post("/webhook", (req, res) => {
 });
 
 
-// ================= EXOTEL VOICE BOT =================
+// ================= EXOTEL VOICE BOT (FIXED) =================
 
 app.post("/exotel-voice", async (req, res) => {
-  const caller = req.body.From || "Customer";
-
+  const caller = req.body.From || req.body.CallerID || "Unknown";
+  
   console.log("📞 Incoming Voice Call From:", caller);
 
-  // First AI question
-  const responseXML = `
+  // ✅ FIXED: Proper XML response with correct content-type
+  // Increased timeout to 10 seconds for better voice recording
+  const responseXML = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="female" language="en-IN">
         Hello! Welcome to Property Solutions.
-        Are you looking to buy or rent a property?
-        Please say Buy or Rent after the beep.
+        Please tell me your property requirement after the beep.
+        For buying property say buy. For renting property say rent.
     </Say>
-    <Record timeout="5" maxLength="5" action="/process-voice" />
+    <Record timeout="10" maxLength="30" />
 </Response>`;
 
-  res.type("text/xml");
+  res.set("Content-Type", "text/xml");
   res.send(responseXML);
 });
 
@@ -203,16 +292,18 @@ app.post("/exotel-voice", async (req, res) => {
 
 app.post("/process-voice", async (req, res) => {
   console.log("🎤 Voice Recording URL:", req.body.RecordingUrl);
+  console.log("🎤 Call Duration:", req.body.Duration);
 
-  const responseXML = `
+  // Thank the caller after recording
+  const responseXML = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="female" language="en-IN">
-        Thank you. Our property expert will contact you soon.
-        Have a great day!
+        Thank you. Our property expert will contact you shortly.
+        Have a great day! Good bye.
     </Say>
 </Response>`;
 
-  res.type("text/xml");
+  res.set("Content-Type", "text/xml");
   res.send(responseXML);
 });
 
@@ -223,4 +314,6 @@ const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📱 WhatsApp Webhook: /webhook`);
+    console.log(`📞 Exotel Voice: /exotel-voice`);
 });
