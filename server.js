@@ -83,41 +83,40 @@ const connectToAgent = async (userPhone) => {
 // ================= VAPI.AI AI AGENT CONFIGURATION =================
 // Vapi Phone Number ID - Get from https://dashboard.vapi.ai/phone-numbers
 const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID || "21f3119a-899b-4685-9e02-f785fdae2f99";
+const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || "4a2ca879-e6c9-4379-a6b9-98eb38f20f27";
 
 const connectToAIAgent = async (userPhone) => {
     try {
         // Convert to E.164 format (+91 for India)
         // Ensure the phone number has country code
-        let formattedPhone = userPhone.replace(/^\+91/, ""); // Remove +91 if present
-        formattedPhone = "+91" + formattedPhone; // Add +91 back
+        const formattedPhone = "+91" + userPhone.slice(-10);
         
         console.log(`🤖 Calling AI Agent for ${formattedPhone}`);
         console.log(`📱 Using Vapi Phone Number ID: ${VAPI_PHONE_NUMBER_ID}`);
+        console.log(`🤖 Using Vapi Assistant ID: ${VAPI_ASSISTANT_ID}`);
 
         const response = await axios.post(
-            "https://api.vapi.ai/call",
+            "https://api.vapi.io/v1/calls",
             {
-                assistantId: process.env.VAPI_ASSISTANT_ID,
                 phoneNumberId: VAPI_PHONE_NUMBER_ID,
                 customer: {
-                    phoneNumber: {
-                        number: formattedPhone
-                    }
-                }
+                    phoneNumber: { number: formattedPhone }
+                },
+                assistantId: VAPI_ASSISTANT_ID
             },
             {
                 headers: {
-                    Authorization: `Bearer ${process.env.VAPI_API_KEY}`,
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.VAPI_API_KEY}`
                 }
             }
         );
 
         console.log("✅ AI Call Started:", response.data);
-        return { success: true };
+        return { success: true, data: response.data };
     } catch (error) {
         console.error("❌ AI Call Error:", error.response?.data || error.message);
-        return { success: false };
+        return { success: false, error: error.response?.data || error.message };
     }
 };
 
