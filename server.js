@@ -81,19 +81,28 @@ const connectToAgent = async (userPhone) => {
 };
 
 // ================= VAPI.AI AI AGENT CONFIGURATION =================
+// Vapi Phone Number ID - Get from https://dashboard.vapi.ai/phone-numbers
+const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID || "21f3119a-899b-4685-9e02-f785fdae2f99";
+
 const connectToAIAgent = async (userPhone) => {
     try {
         // Convert to E.164 format (+91 for India)
-        const formattedPhone = "+91" + userPhone.replace(/^91/, "");
+        // Ensure the phone number has country code
+        let formattedPhone = userPhone.replace(/^\+91/, ""); // Remove +91 if present
+        formattedPhone = "+91" + formattedPhone; // Add +91 back
+        
         console.log(`🤖 Calling AI Agent for ${formattedPhone}`);
+        console.log(`📱 Using Vapi Phone Number ID: ${VAPI_PHONE_NUMBER_ID}`);
 
         const response = await axios.post(
             "https://api.vapi.ai/call",
             {
                 assistantId: process.env.VAPI_ASSISTANT_ID,
-                phoneNumber: "+12408506128",
+                phoneNumberId: VAPI_PHONE_NUMBER_ID,
                 customer: {
-                    number: formattedPhone
+                    phoneNumber: {
+                        number: formattedPhone
+                    }
                 }
             },
             {
