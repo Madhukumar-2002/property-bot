@@ -95,25 +95,26 @@ const connectToAIAgent = async (userPhone) => {
         console.log(`📱 Using Vapi Phone Number ID: ${VAPI_PHONE_NUMBER_ID}`);
         console.log(`🤖 Using Vapi Assistant ID: ${VAPI_ASSISTANT_ID}`);
 
-        const response = await axios.post(
-            "https://api.vapi.io/v1/calls",
+        const vapiResponse = await axios.post(
+            "https://api.vapi.ai/call",
             {
-                phoneNumberId: VAPI_PHONE_NUMBER_ID,
+                assistantId: process.env.VAPI_ASSISTANT_ID,
+                phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID,
                 customer: {
-                    phoneNumber: { number: formattedPhone }
-                },
-                assistantId: VAPI_ASSISTANT_ID
+                    number: "+91" + userPhone.slice(-10)
+                }
             },
             {
                 headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.VAPI_API_KEY}`
+                    Authorization: `Bearer ${process.env.VAPI_API_KEY}`,
+                    "Content-Type": "application/json"
                 }
             }
         );
 
-        console.log("✅ AI Call Started:", response.data);
-        return { success: true, data: response.data };
+        console.log("✅ AI Call Started:", vapiResponse.data);
+        return { success: true, data: vapiResponse.data };
+
     } catch (error) {
         console.error("❌ AI Call Error:", error.response?.data || error.message);
         return { success: false, error: error.response?.data || error.message };
