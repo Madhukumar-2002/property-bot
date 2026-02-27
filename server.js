@@ -95,31 +95,35 @@ const connectToAIAgent = async (userPhone) => {
         console.log(`📱 Using Vapi Phone Number ID: ${VAPI_PHONE_NUMBER_ID}`);
         console.log(`🤖 Using Vapi Assistant ID: ${VAPI_ASSISTANT_ID}`);
 
-        const vapiResponse = await axios.post(
-            "https://api.vapi.ai/calls",
-            {
-                assistantId: process.env.VAPI_ASSISTANT_ID,
-                phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID,
-                customer: {
-                    number: "+91" + userPhone.slice(-10)
-                }
-            },
-
-            {
-                headers: {
-                    Authorization: `Bearer ${process.env.VAPI_API_KEY}`,
-                    "Content-Type": "application/json"
-                }
+        const response = await fetch("https://api.vapi.ai/v1/calls", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.VAPI_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            assistantId: process.env.VAPI_ASSISTANT_ID,
+            phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID,
+            customer: {
+              number: formattedPhone
             }
-        );
+          })
+        });
 
-        console.log("✅ AI Call Started:", vapiResponse.data);
-        return { success: true, data: vapiResponse.data };
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const vapiData = await response.json();
+        console.log("✅ AI Call Started:", vapiData);
+        return { success: true, data: vapiData };
+
 
     } catch (error) {
-        console.error("❌ AI Call Error:", error.response?.data || error.message);
-        return { success: false, error: error.response?.data || error.message };
+        console.error("❌ AI Call Error:", error.message);
+        return { success: false, error: error.message };
     }
+
 };
 
 const app = express();
