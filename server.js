@@ -96,7 +96,7 @@ const connectToAIAgent = async (userPhone) => {
         console.log(`🤖 Using Vapi Assistant ID: ${VAPI_ASSISTANT_ID}`);
 
         const vapiResponse = await axios.post(
-            "https://api.vapi.ai/call",
+            "https://api.vapi.ai/calls",
             {
                 assistantId: process.env.VAPI_ASSISTANT_ID,
                 phoneNumberId: process.env.VAPI_PHONE_NUMBER_ID,
@@ -104,6 +104,7 @@ const connectToAIAgent = async (userPhone) => {
                     number: "+91" + userPhone.slice(-10)
                 }
             },
+
             {
                 headers: {
                     Authorization: `Bearer ${process.env.VAPI_API_KEY}`,
