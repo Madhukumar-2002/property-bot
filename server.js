@@ -241,16 +241,17 @@ app.post("/webhook", async (req, res) => {
                     // 🚀 STEP 2 — CHAT FLOW LOGIC
                     let replyMessage;
                     
-                    if (text === "1") {
+                    if (text && text.includes("1")) {
                         replyMessage = "🏡 Great! You want to BUY property.\n\nPlease tell me:\nCity + Budget";
                     }
-                    else if (text === "2") {
+                    else if (text && text.includes("2")) {
                         replyMessage = "🏠 You want RENT property.\n\nSend:\nCity + Monthly Rent Budget";
                     }
-                    else if (text === "3") {
+                    else if (text && text.includes("3")) {
                         replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
                     }
-                    else if (text === "4" || buttonPayload === "TALK_TO_AGENT") {
+                    else if (text && text.includes("4") || buttonPayload === "TALK_TO_AGENT") {
+
                         // 🚀 TALK TO AGENT - Connect to AI Agent via Vapi.ai
                         console.log(`🤖 User requested AI agent. Phone: ${from}`);
 
