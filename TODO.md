@@ -1,53 +1,58 @@
-# TODO - Fix Railway 502 Webhook Error
+# VAPI Endpoint Fix - Verification Checklist
 
-## Problem
-- GET /webhook returning 502 (Bad Gateway)
-- "connection refused" errors - server not running
-- MongoDB connection failure was causing app to crash
+## ✅ Completed Steps
+- [x] Verified local server.js has correct endpoint: `https://api.vapi.ai/v1/calls`
+- [x] Code pushed to GitHub
 
-## Solution Applied
-- [x] Removed `process.exit(1)` from server.js - server now keeps running even if MongoDB fails
-- [x] Added retry logic for MongoDB connection every 10 seconds in production
-- [x] Added better logging for disconnection events
+## 🔄 Next Steps to Complete
 
-## Next Steps
-- [x] Commit the changes to git
-- [x] Push to GitHub
-- [x] Redeploy on Railway
-- [x] Verify webhook endpoint works
-- [x] Created .env.example file with all environment variables
+### 1. Redeploy on Railway
+- [ ] Go to Railway dashboard (https://railway.app)
+- [ ] Find your project
+- [ ] Click "Redeploy" button to pull latest code
+- [ ] Wait for deployment to complete
 
-## Deployment Instructions
+### 2. Verify Deployment
+- [ ] Check Railway logs for successful startup
+- [ ] Confirm no 404 errors in logs
+- [ ] Test the WhatsApp bot by sending "4" to trigger AI agent
 
-### Environment Variables Setup in Railway:
-```bash
-WHATSAPP_TOKEN=your_token
-WHATSAPP_PHONE_ID=your_phone_id
-VERIFY_TOKEN=your_verify_token
-MONGO_URI=your_mongodb_uri
-VAPI_API_KEY=your_vapi_key
-VAPI_ASSISTANT_ID=4a2ca879-e6c9-4379-a6b9-98eb38f20f27
-VAPI_PHONE_NUMBER_ID=21f3119a-899b-4685-9e02-f785fdae2f99
+### 3. Test the Fix
+- [ ] Send message "4" to your WhatsApp bot
+- [ ] Verify AI call is initiated successfully
+- [ ] Check Railway logs for "✅ AI Call Started" message
+
+## 🔍 Troubleshooting (if still getting 404)
+
+If you still see 404 errors after redeploying:
+
+1. **Check Railway Environment Variables:**
+   - VAPI_API_KEY - must be valid
+   - VAPI_ASSISTANT_ID - must be correct
+   - VAPI_PHONE_NUMBER_ID - must be correct
+
+2. **Verify in Railway Logs:**
+   - Look for "🤖 Calling AI Agent for [phone]"
+   - Look for "📱 Using Vapi Phone Number ID: [id]"
+   - Look for "🤖 Using Vapi Assistant ID: [id]"
+
+3. **Common Issues:**
+   - VAPI_API_KEY might be expired or invalid
+   - Assistant ID might be incorrect
+   - Phone Number ID might be incorrect
+
+## 📞 Expected Success Log Output
+
+When working correctly, you should see:
+```
+🤖 User requested AI agent. Phone: [user_phone]
+🤖 Calling AI Agent for +91[phone]
+📱 Using Vapi Phone Number ID: [id]
+🤖 Using Vapi Assistant ID: [id]
+✅ AI Call Started: [call_data]
+✅ Call logged to MongoDB
 ```
 
-### Test the Flow:
-1. WhatsApp → Type "4" or click "Talk to AI Agent"
-2. Receive: "🤖 Connecting you to AI agent… 📞 Please answer the call."
-3. Phone rings from Vapi number (+1 240 850 6128)
-4. AI agent answers and converses naturally
+## 🚀 Ready to Test!
 
-## Current Implementation Status:
-✅ WhatsApp webhook - Receives messages
-✅ "Talk to AI Agent" handler - Triggers on text "4" or button "TALK_TO_AGENT"
-✅ Vapi.ai integration - Calls AI assistant with proper E.164 formatting (+91)
-✅ MongoDB logging - Stores call records (with connection check)
-✅ Error handling - Graceful fallbacks
-✅ .env.example - Environment variable documentation
-
-🚀 Your Code is Ready for Deployment!
-
-
-## Railway Configuration (Already Correct)
-- PORT = 8080
-- startCommand = "npm start"
-- NODE_ENV = "production"
+Please redeploy on Railway and test by sending "4" to your WhatsApp bot.
