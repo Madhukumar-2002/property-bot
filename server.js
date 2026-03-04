@@ -255,37 +255,10 @@ app.post("/webhook", async (req, res) => {
                         replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
                     }
                     else if (text && text.includes("4") || buttonPayload === "TALK_TO_AGENT") {
-
-                        // 🚀 TALK TO AGENT - Connect to AI Agent via Vapi.ai
-                        console.log(`🤖 User requested AI agent. Phone: ${from}`);
-
-                        // 1️⃣ Immediate WhatsApp reply
-                        await sendWhatsAppMessage(from, "🤖 Connecting you to AI agent… 📞 Please answer the call.");
-
-                        // 2️⃣ Call Vapi AI assistant
-                        const callResult = await connectToAIAgent(from);
-
-                        if (callResult.success) {
-                            // Optional: log call to MongoDB (only if connected)
-                            try {
-                                if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
-                                    await mongoose.connection.db.collection("calls").insertOne({
-                                        userPhone: from,
-                                        timestamp: new Date(),
-                                        assistantId: process.env.VAPI_ASSISTANT_ID,
-                                        vapiResponse: callResult.data
-                                    });
-                                    console.log("✅ Call logged to MongoDB");
-                                } else {
-                                    console.log("⚠️ MongoDB not connected - call not logged");
-                                }
-                            } catch (dbError) {
-                                console.error("❌ Error logging call to MongoDB:", dbError.message);
-                            }
-                        } else {
-                            await sendWhatsAppMessage(from, "⚠️ Could not connect AI agent. Please try again later.");
-                        }
-                        continue; // Skip sending replyMessage since we handled it
+                        await sendWhatsAppMessage(
+                            from,
+                            "📞 Please call our AI Property Agent at:\n+1 239 423 2492\n\nOur AI assistant will help you with property details."
+                        );
                     }
 
                     else {
