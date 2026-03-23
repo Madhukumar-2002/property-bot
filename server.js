@@ -255,12 +255,15 @@ app.post("/webhook", async (req, res) => {
                         replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
                     }
                     else if (text && text.includes("4") || buttonPayload === "TALK_TO_AGENT") {
+                        // Step 1: Inform user
                         await sendWhatsAppMessage(
                             from,
-                            "📞 Please call our AI Property Agent at:\n+1 239 423 2492\n\nOur AI assistant will help you with property details."
+                            "📞 Connecting you to our AI Property Agent... Please wait for a call."
                         );
-                    }
 
+                        // Step 2: Trigger AI Call
+                        await connectToAIAgent(from);
+                    }
                     else {
                         // Default welcome message for new users or invalid input
                         replyMessage = welcomeMessage;
