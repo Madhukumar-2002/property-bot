@@ -43,22 +43,7 @@ AI-powered bot system for property management with WhatsApp integration.
 - MongoDB
 - Maven 3.9+
 
-## Installation
-
-### Java Backend
-```
-bash
-cd apache-maven-3.9.5
-mvn clean install
-mvn spring-boot:run
-```
-
-### Node.js Server
-```
-bash
-npm install
-node server.js
-```
+## Installation\n\n### Java Backend\n```\nbash\ncd apache-maven-3.9.5\nmvn clean install\nmvn spring-boot:run\n```\n\n### Node.js Server (WhatsApp AI Bot)\n```\nbash\nnpm install\nnode server_fixed.js   # Primary - uses /call endpoint\n# or\nnode server.js         # Backup - now also uses /call endpoint\n```\n\n### VAPI Configuration\n- Endpoint: `https://api.vapi.ai/call` (primary)\n- Fallback: `https://api.vapi.ai/v1/calls` (check dashboard)\n- Auth: `process.env.VAPI_API_KEY`\n- Phone: Auto +91 prefix for India
 
 ## Configuration
 

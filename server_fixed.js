@@ -83,7 +83,8 @@ const connectToAgent = async (userPhone) => {
 
 // ================= VAPI.AI AI AGENT CONFIGURATION =================
 // Vapi Phone Number ID - Get from https://dashboard.vapi.ai/phone-numbers
-const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID || "cf683b15-bf6e-497c-9b3d-e7b380bb7b86";\nconst VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || "4a2ca879-e6c9-4379-a6b9-98eb38f20f27";
+const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID || "cf683b15-bf6e-497c-9b3d-e7b380bb7b86";
+const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || "4a2ca879-e6c9-4379-a6b9-98eb38f20f27";
 
 const connectToAIAgent = async (userPhone) => {
     try {
@@ -98,7 +99,7 @@ const connectToAIAgent = async (userPhone) => {
         }
 
         const response = await axios.post(
-"https://api.vapi.ai/call" // Primary VAPI endpoint. Fallback: /v1/calls if dashboard specifies
+            "https://api.vapi.ai/call",
             {
                 assistantId: VAPI_ASSISTANT_ID,
                 phoneNumberId: VAPI_PHONE_NUMBER_ID,
@@ -130,8 +131,8 @@ app.use(express.json());
 
 // Check if MONGO_URI is defined (commented for testing direct function calls)
 //if (!process.env.MONGO_URI) {
-//    console.error("❌ ERROR: MONGO_URI environment variable is not defined!");
-//    console.log("Please set MONGO_URI in your Railway Variables tab.");
+    //console.error("❌ ERROR: MONGO_URI environment variable is not defined!");
+    //console.log("Please set MONGO_URI in your Railway Variables tab.");
 //}
 console.log("✅ MONGO_URI configured:", !!process.env.MONGO_URI);
 
@@ -207,94 +208,99 @@ app.get("/webhook", (req, res) => {
 
 // POST webhook - for receiving WhatsApp messages
 app.post("/webhook", async (req, res) => {
-    const body = req.body;
-    
-    console.log("📩 Webhook Received:", JSON.stringify(body, null, 2));
-    
-    // Check if this is a WhatsApp message
-    if (body.object === "whatsapp_business_account") {
-        const entries = body.entry || [];
+    try {
+        const body = req.body;
         
-        for (const entry of entries) {
-            const changes = entry.changes || [];
-            for (const change of changes) {
-                const messages = change.value?.messages || [];
-                for (const message of messages) {
-                    const from = message.from;
-                    const text = message.text?.body.toLowerCase().trim();
-                    const buttonPayload = message.interactive?.button_reply?.id;
+        console.log("📩 Webhook Received:", JSON.stringify(body, null, 2));
+        
+        // Check if this is a WhatsApp message
+        if (body.object === "whatsapp_business_account") {
+            const entries = body.entry || [];
+            
+            for (const entry of entries) {
+                const changes = entry.changes || [];
+                for (const change of changes) {
+                    const messages = change.value?.messages || [];
+                    for (const message of messages) {
+                        const from = message.from;
+                        const text = message.text?.body.toLowerCase().trim();
+                        const buttonPayload = message.interactive?.button_reply?.id;
 
-                    // Load or create user state
-                    let user = await User.findOne({ phone: from });
-                    if (!user) {
-                        user = new User({ phone: from });
-                    }
-                    console.log("👤 User state:", user.step, "called:", user.called);
+                        // Load or create user state
+                        let user = await User.findOne({ phone: from });
+                        if (!user) {
+                            user = new User({ phone: from });
+                        }
+                        console.log("👤 User state:", user.step, "called:", user.called);
 
-                    console.log("💬 Message from:", from);
-                    console.log("📝 Message:", text);
-                    console.log("🔘 Button Payload:", buttonPayload);
+                        console.log("💬 Message from:", from);
+                        console.log("📝 Message:", text);
+                        console.log("🔘 Button Payload:", buttonPayload);
 
-                    // ✅ STEP 1 — PROPERTY FLOW WELCOME MESSAGE
-                    const welcomeMessage = 
-                        "🏠 *Welcome to Property Solutions Bot!* \n\n" +
-                        "I can help you with:\n\n" +
-                        "1️⃣ Buy Property\n" +
-                        "2️⃣ Rent Property\n" +
-                        "3️⃣ Sell Property\n" +
-                        "4️⃣ Talk to Agent\n\n" +
-                        "👉 Please reply with a number (1-4)";
+                        // ✅ STEP 1 — PROPERTY FLOW WELCOME MESSAGE
+                        const welcomeMessage = 
+                            "🏠 *Welcome to Property Solutions Bot!* \n\n" +
+                            "I can help you with:\n\n" +
+                            "1️⃣ Buy Property\n" +
+                            "2️⃣ Rent Property\n" +
+                            "3️⃣ Sell Property\n" +
+                            "4️⃣ Talk to Agent\n\n" +
+                            "👉 Please reply with a number (1-4)";
 
-                    // 🚀 STEP 2 — CHAT FLOW LOGIC
-                    let replyMessage;
-                    
-                    if (text && text.includes("1")) {
-                        replyMessage = "🏡 Great! You want to BUY property.\n\nPlease tell me:\nCity + Budget";
-                    }
-                    else if (text && text.includes("2")) {
-                        replyMessage = "🏠 You want RENT property.\n\nSend:\nCity + Monthly Rent Budget";
-                    }
-                    else if (text && text.includes("3")) {
-                        replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
-                    }
-                    else if (text && text.includes("4") || buttonPayload === "TALK_TO_AGENT") {
-                        await sendWhatsAppMessage(
-                            from,
-                            "📞 Connecting you to our AI Property Agent... Please wait for a call."
-                        );
-
-                        const result = await connectToAIAgent(from);
-
-                        if (!result.success) {
+                        // 🚀 STEP 2 — CHAT FLOW LOGIC
+                        let replyMessage;
+                        
+                        if (text && text.includes("1")) {
+                            replyMessage = "🏡 Great! You want to BUY property.\n\nPlease tell me:\nCity + Budget";
+                        }
+                        else if (text && text.includes("2")) {
+                            replyMessage = "🏠 You want RENT property.\n\nSend:\nCity + Monthly Rent Budget";
+                        }
+                        else if (text && text.includes("3")) {
+                            replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
+                        }
+                        else if (text && text.includes("4") || buttonPayload === "TALK_TO_AGENT") {
                             await sendWhatsAppMessage(
                                 from,
-                                "⚠️ Sorry, we could not trigger the AI call. Please try again later."
+                                "📞 Connecting you to our AI Property Agent... Please wait for a call."
                             );
+
+                            const result = await connectToAIAgent(from);
+
+                            if (!result.success) {
+                                await sendWhatsAppMessage(
+                                    from,
+                                    "⚠️ Sorry, we could not trigger the AI call. Please try again later."
+                                );
+                            }
+
+                            // update user state
+                            user.called = true;
+                            user.step = "CALLED_AGENT";
+                            await user.save();
+
+                            // Set a default reply for logging
+                            replyMessage = "🔹 AI call triggered, you should receive a call shortly.";
+                        } else {
+                            // Default welcome message for new users or invalid input
+                            replyMessage = welcomeMessage;
                         }
 
-                        // update user state
-                        user.called = true;
-                        user.step = "CALLED_AGENT";
-                        await user.save();
+                        // Always save updated user state (moved inside logic above)
 
-                        // Set a default reply for logging
-                        replyMessage = "🔹 AI call triggered, you should receive a call shortly.";
-                    } else {
-                        // Default welcome message for new users or invalid input
-                        replyMessage = welcomeMessage;
+                        // Send the appropriate reply
+                        await sendWhatsAppMessage(from, replyMessage);
                     }
-
-                    // Always save updated user state (moved inside logic above)
-
-                    // Send the appropriate reply
-                    await sendWhatsAppMessage(from, replyMessage);
                 }
             }
+            
+            res.status(200).send("OK");
+        } else {
+            res.status(404).send("Not Found");
         }
-        
-        res.status(200).send("OK");
-    } else {
-        res.status(404).send("Not Found");
+    } catch (err) {
+        console.error("❌ Webhook POST Error:", err.message);
+        res.status(500).send("Internal Server Error");
     }
 });
 
@@ -344,13 +350,12 @@ app.post("/process-voice", async (req, res) => {
 /* ==========================
    PORT FIX (VERY IMPORTANT)
 ========================== */
-// Export functions for direct testing
 module.exports = {
     connectToAIAgent,
     connectToMongoDB,
     connectToAgent,
     sendWhatsAppMessage,
-    app  // optional: export app for advanced testing
+    app
 };
 
 const PORT = process.env.PORT || 8080;
@@ -360,4 +365,3 @@ app.listen(PORT, () => {
     console.log(`📱 WhatsApp Webhook: /webhook`);
     console.log(`📞 Exotel Voice: /exotel-voice`);
 });
-
