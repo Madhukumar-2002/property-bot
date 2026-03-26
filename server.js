@@ -83,7 +83,8 @@ const connectToAgent = async (userPhone) => {
 
 // ================= VAPI.AI AI AGENT CONFIGURATION =================
 // Vapi Phone Number ID - Get from https://dashboard.vapi.ai/phone-numbers
-const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID || "cf683b15-bf6e-497c-9b3d-e7b380bb7b86";\nconst VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || "4a2ca879-e6c9-4379-a6b9-98eb38f20f27";
+const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID || "cf683b15-bf6e-497c-9b3d-e7b380bb7b86";
+const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || "4a2ca879-e6c9-4379-a6b9-98eb38f20f27";
 
 const connectToAIAgent = async (userPhone) => {
     try {
@@ -98,7 +99,7 @@ const connectToAIAgent = async (userPhone) => {
         }
 
         const response = await axios.post(
-"https://api.vapi.ai/call" // Primary VAPI endpoint. Fallback: /v1/calls if dashboard specifies
+            "https://api.vapi.ai/call",
             {
                 assistantId: VAPI_ASSISTANT_ID,
                 phoneNumberId: VAPI_PHONE_NUMBER_ID,
@@ -344,7 +345,6 @@ app.post("/process-voice", async (req, res) => {
 /* ==========================
    PORT FIX (VERY IMPORTANT)
 ========================== */
-// Export functions for direct testing
 module.exports = {
     connectToAIAgent,
     connectToMongoDB,
@@ -360,4 +360,3 @@ app.listen(PORT, () => {
     console.log(`📱 WhatsApp Webhook: /webhook`);
     console.log(`📞 Exotel Voice: /exotel-voice`);
 });
-
