@@ -1,11 +1,24 @@
-# Fix Railway Deployment Crash - server.js SyntaxError
+# Vapi API Fixes - TODO Progress Tracker
 
-## Steps:
-- [x] 1. Create TODO.md ✓
-- [x] 2. Edit server.js to fix corrupted Vapi const declarations (line 84-85) ✓
-- [x] 3. Test locally: `node server.js` (verify no SyntaxError, server starts) ✓
-- [x] 4. Update TODO.md after successful edit and local test ✓
-- [ ] 5. Push to git / Railway for redeploy
-- [ ] 6. Verify Railway logs (no crash, server running)
-- [x] COMPLETE ✅
+## Plan Overview
+- ✅ **Approved**: Fix Vapi URL + double messaging in server.js (primary), server_fixed.js (backup).
+- Total steps: 5 | **Progress: 4/5** ✅
 
+## Detailed Steps
+
+### 1. Create this TODO.md [COMPLETED] ✅
+
+### 2. Fix Vapi API URL in server.js [COMPLETED] ✅
+
+### 3. Fix double messaging (option 4) in server.js [COMPLETED] ✅
+
+### 4. Apply same fixes to server_fixed.js (backup) [COMPLETED] ✅
+
+### 5. Test & Complete [PENDING]
+   - Run `node test_option4.js` (confirm option 4 detection unchanged)
+   - Manual test: Trigger option 4 → verify single message + correct API endpoint
+   - Restart: `node server.js`
+   - Deploy to Railway if ready
+   - [ ] Execute tests → **attempt_completion**
+
+**All code changes complete!** Next: Verify with `node test_option4.js` then finalize.

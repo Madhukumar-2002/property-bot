@@ -88,7 +88,9 @@ const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || "4a2ca879-e6c9-4379-a
 
 const connectToAIAgent = async (userPhone) => {
     try {
-        let formattedPhone = userPhone.startsWith("+") ? userPhone : "+91" + userPhone.slice(-10);
+        let formattedPhone = userPhone.startsWith("+") 
+            ? userPhone 
+            : "+91" + userPhone.slice(-10);
 
         console.log(`🤖 Calling AI Agent for ${formattedPhone}`);
         console.log(`📱 Phone Number ID: ${VAPI_PHONE_NUMBER_ID}`);
@@ -99,7 +101,7 @@ const connectToAIAgent = async (userPhone) => {
         }
 
         const response = await axios.post(
-            "https://api.vapi.ai/call",
+            "https://api.vapi.ai/v1/calls",
             {
                 assistantId: VAPI_ASSISTANT_ID,
                 phoneNumberId: VAPI_PHONE_NUMBER_ID,
@@ -129,11 +131,6 @@ app.use(express.json());
    MongoDB Connection with Better Error Handling
 ========================== */
 
-// Check if MONGO_URI is defined (commented for testing direct function calls)
-//if (!process.env.MONGO_URI) {
-    //console.error("❌ ERROR: MONGO_URI environment variable is not defined!");
-    //console.log("Please set MONGO_URI in your Railway Variables tab.");
-//}
 console.log("✅ MONGO_URI configured:", !!process.env.MONGO_URI);
 
 const connectToMongoDB = async () => {
@@ -208,99 +205,87 @@ app.get("/webhook", (req, res) => {
 
 // POST webhook - for receiving WhatsApp messages
 app.post("/webhook", async (req, res) => {
-    try {
-        const body = req.body;
+    const body = req.body;
+    
+    console.log("📩 Webhook Received:", JSON.stringify(body, null, 2));
+    
+    // Check if this is a WhatsApp message
+    if (body.object === "whatsapp_business_account") {
+        const entries = body.entry || [];
         
-        console.log("📩 Webhook Received:", JSON.stringify(body, null, 2));
-        
-        // Check if this is a WhatsApp message
-        if (body.object === "whatsapp_business_account") {
-            const entries = body.entry || [];
-            
-            for (const entry of entries) {
-                const changes = entry.changes || [];
-                for (const change of changes) {
-                    const messages = change.value?.messages || [];
-                    for (const message of messages) {
-                        const from = message.from;
-                        const text = message.text?.body.toLowerCase().trim();
-                        const buttonPayload = message.interactive?.button_reply?.id;
+        for (const entry of entries) {
+            const changes = entry.changes || [];
+            for (const change of changes) {
+                const messages = change.value?.messages || [];
+                for (const message of messages) {
+                    const from = message.from;
+                    const text = message.text?.body.toLowerCase().trim();
+                    const buttonPayload = message.interactive?.button_reply?.id;
 
-                        // Load or create user state
-                        let user = await User.findOne({ phone: from });
-                        if (!user) {
-                            user = new User({ phone: from });
-                        }
-                        console.log("👤 User state:", user.step, "called:", user.called);
+                    // Load or create user state
+                    let user = await User.findOne({ phone: from });
+                    if (!user) {
+                        user = new User({ phone: from });
+                    }
+                    console.log("👤 User state:", user.step, "called:", user.called);
 
-                        console.log("💬 Message from:", from);
-                        console.log("📝 Message:", text);
-                        console.log("🔘 Button Payload:", buttonPayload);
+                    console.log("💬 Message from:", from);
+                    console.log("📝 Message:", text);
+                    console.log("🔘 Button Payload:", buttonPayload);
 
-                        // ✅ STEP 1 — PROPERTY FLOW WELCOME MESSAGE
-                        const welcomeMessage = 
-                            "🏠 *Welcome to Property Solutions Bot!* \n\n" +
-                            "I can help you with:\n\n" +
-                            "1️⃣ Buy Property\n" +
-                            "2️⃣ Rent Property\n" +
-                            "3️⃣ Sell Property\n" +
-                            "4️⃣ Talk to Agent\n\n" +
-                            "👉 Please reply with a number (1-4)";
+                    // ✅ STEP 1 — PROPERTY FLOW WELCOME MESSAGE
+                    const welcomeMessage = 
+                        "🏠 *Welcome to Property Solutions Bot!* \n\n" +
+                        "I can help you with:\n\n" +
+                        "1️⃣ Buy Property\n" +
+                        "2️⃣ Rent Property\n" +
+                        "3️⃣ Sell Property\n" +
+                        "4️⃣ Talk to Agent\n\n" +
+                        "👉 Please reply with a number (1-4)";
 
-                        // 🚀 STEP 2 — CHAT FLOW LOGIC
-                        let replyMessage;
-                        
-                        if (text && text.includes("1")) {
-                            replyMessage = "🏡 Great! You want to BUY property.\n\nPlease tell me:\nCity + Budget";
-                        }
-                        else if (text && text.includes("2")) {
-                            replyMessage = "🏠 You want RENT property.\n\nSend:\nCity + Monthly Rent Budget";
-                        }
-                        else if (text && text.includes("3")) {
-                            replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
-                        }
-                        else if (text && text.includes("4") || buttonPayload === "TALK_TO_AGENT") {
+                    // 🚀 STEP 2 — CHAT FLOW LOGIC
+                    let replyMessage;
+                    
+                    if (text && text.includes("1")) {
+                        replyMessage = "🏡 Great! You want to BUY property.\n\nPlease tell me:\nCity + Budget";
+                    }
+                    else if (text && text.includes("2")) {
+                        replyMessage = "🏠 You want RENT property.\n\nSend:\nCity + Monthly Rent Budget";
+                    }
+                    else if (text && text.includes("3")) {
+                        replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
+                    }
+                    else if (text && text.includes("4") || buttonPayload === "TALK_TO_AGENT") {
+                        const result = await connectToAIAgent(from);
+
+                        if (!result.success) {
                             await sendWhatsAppMessage(
                                 from,
-                                "📞 Connecting you to our AI Property Agent... Please wait for a call."
+                                "⚠️ Sorry, we could not trigger the AI call. Please try again later."
                             );
-
-                            const result = await connectToAIAgent(from);
-
-                            if (!result.success) {
-                                await sendWhatsAppMessage(
-                                    from,
-                                    "⚠️ Sorry, we could not trigger the AI call. Please try again later."
-                                );
-                            }
-
-                            // update user state
-                            user.called = true;
-                            user.step = "CALLED_AGENT";
-                            await user.save();
-
-                            // Set a default reply for logging
-                            replyMessage = "🔹 AI call triggered, you should receive a call shortly.";
-                        } else {
-                            // Default welcome message for new users or invalid input
-                            replyMessage = welcomeMessage;
                         }
 
-                        // Always save updated user state (moved inside logic above)
+                        // update user state
+                        user.called = true;
+                        user.step = "CALLED_AGENT";
+                        await user.save();
 
-                        // Send the appropriate reply
-                        await sendWhatsAppMessage(from, replyMessage);
+                        // Single message after AI call attempt
+                        replyMessage = "📞 Connecting you to our AI Property Agent... Please wait for a call.";
+                    } else {
+                        // Default welcome message for new users or invalid input
+                        replyMessage = welcomeMessage;
                     }
+
+                    // Send the appropriate reply
+                    await sendWhatsAppMessage(from, replyMessage);
                 }
             }
-            
-            res.status(200).send("OK");
-        } else {
-            res.status(404).send("Not Found");
         }
-    } catch (err) {
-        console.error("❌ Webhook POST Error:", err.message);
-        res.status(500).send("Internal Server Error");
+        
+        res.status(200).send("OK");
+    } else {
+        res.status(404).send("Not Found");
     }
 });
 
@@ -355,7 +340,7 @@ module.exports = {
     connectToMongoDB,
     connectToAgent,
     sendWhatsAppMessage,
-    app
+    app  // optional: export app for advanced testing
 };
 
 const PORT = process.env.PORT || 8080;

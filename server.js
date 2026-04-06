@@ -88,7 +88,9 @@ const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || "4a2ca879-e6c9-4379-a
 
 const connectToAIAgent = async (userPhone) => {
     try {
-        let formattedPhone = userPhone.startsWith("+") ? userPhone : "+91" + userPhone.slice(-10);
+        let formattedPhone = userPhone.startsWith("+") 
+            ? userPhone 
+            : "+91" + userPhone.slice(-10);
 
         console.log(`🤖 Calling AI Agent for ${formattedPhone}`);
         console.log(`📱 Phone Number ID: ${VAPI_PHONE_NUMBER_ID}`);
@@ -99,7 +101,7 @@ const connectToAIAgent = async (userPhone) => {
         }
 
         const response = await axios.post(
-            "https://api.vapi.ai/call",
+            "https://api.vapi.ai/v1/calls",   // ✅ FIXED HERE
             {
                 assistantId: VAPI_ASSISTANT_ID,
                 phoneNumberId: VAPI_PHONE_NUMBER_ID,
@@ -129,11 +131,6 @@ app.use(express.json());
    MongoDB Connection with Better Error Handling
 ========================== */
 
-// Check if MONGO_URI is defined (commented for testing direct function calls)
-//if (!process.env.MONGO_URI) {
-//    console.error("❌ ERROR: MONGO_URI environment variable is not defined!");
-//    console.log("Please set MONGO_URI in your Railway Variables tab.");
-//}
 console.log("✅ MONGO_URI configured:", !!process.env.MONGO_URI);
 
 const connectToMongoDB = async () => {
@@ -259,11 +256,6 @@ app.post("/webhook", async (req, res) => {
                         replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
                     }
                     else if (text && text.includes("4") || buttonPayload === "TALK_TO_AGENT") {
-                        await sendWhatsAppMessage(
-                            from,
-                            "📞 Connecting you to our AI Property Agent... Please wait for a call."
-                        );
-
                         const result = await connectToAIAgent(from);
 
                         if (!result.success) {
@@ -278,14 +270,12 @@ app.post("/webhook", async (req, res) => {
                         user.step = "CALLED_AGENT";
                         await user.save();
 
-                        // Set a default reply for logging
-                        replyMessage = "🔹 AI call triggered, you should receive a call shortly.";
+                        // Single message after AI call attempt
+                        replyMessage = "📞 Connecting you to our AI Property Agent... Please wait for a call.";
                     } else {
                         // Default welcome message for new users or invalid input
                         replyMessage = welcomeMessage;
                     }
-
-                    // Always save updated user state (moved inside logic above)
 
                     // Send the appropriate reply
                     await sendWhatsAppMessage(from, replyMessage);
@@ -360,3 +350,4 @@ app.listen(PORT, () => {
     console.log(`📱 WhatsApp Webhook: /webhook`);
     console.log(`📞 Exotel Voice: /exotel-voice`);
 });
+
