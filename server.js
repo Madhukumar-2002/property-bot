@@ -101,7 +101,7 @@ const connectToAIAgent = async (userPhone) => {
         }
 
         const response = await axios.post(
-            "https://api.vapi.ai/v1/calls",   // ✅ FIXED HERE
+"https://api.vapi.ai/call",
             {
                 assistantId: VAPI_ASSISTANT_ID,
                 phoneNumberId: VAPI_PHONE_NUMBER_ID,
