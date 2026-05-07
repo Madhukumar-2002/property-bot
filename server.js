@@ -86,26 +86,17 @@ const connectToAgent = async (userPhone) => {
 const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID || "cf683b15-bf6e-497c-9b3d-e7b380bb7b86";
 const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || "4a2ca879-e6c9-4379-a6b9-98eb38f20f27";
 
-const connectToAIAgent = async (userPhone) => {
+const connectToAIAgent = async () => {
     try {
-        let formattedPhone = userPhone.startsWith("+") 
-            ? userPhone 
-            : "+91" + userPhone.slice(-10);
-
-        console.log(`🤖 Calling AI Agent for ${formattedPhone}`);
-        console.log(`📱 Phone Number ID: ${VAPI_PHONE_NUMBER_ID}`);
-        console.log(`🤖 Assistant ID: ${VAPI_ASSISTANT_ID}`);
-
-        if (!VAPI_PHONE_NUMBER_ID || !VAPI_ASSISTANT_ID) {
-            throw new Error("VAPI_PHONE_NUMBER_ID or VAPI_ASSISTANT_ID not set!");
-        }
 
         const response = await axios.post(
-"https://api.vapi.ai/call",
+            "https://api.vapi.ai/call",
             {
                 assistantId: VAPI_ASSISTANT_ID,
                 phoneNumberId: VAPI_PHONE_NUMBER_ID,
-                customer: { number: formattedPhone },
+                customer: {
+                    number: "+12077100714"
+                }
             },
             {
                 headers: {
