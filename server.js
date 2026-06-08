@@ -86,8 +86,12 @@ const connectToAgent = async (userPhone) => {
 const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID || "cf683b15-bf6e-497c-9b3d-e7b380bb7b86";
 const VAPI_ASSISTANT_ID = process.env.VAPI_ASSISTANT_ID || "4a2ca879-e6c9-4379-a6b9-98eb38f20f27";
 
-const connectToAIAgent = async () => {
+const connectToAIAgent = async (customerNumber) => {
     try {
+
+        console.log("🤖 Calling AI Agent for", customerNumber);
+        console.log("📱 Phone Number ID:", VAPI_PHONE_NUMBER_ID);
+        console.log("🤖 Assistant ID:", VAPI_ASSISTANT_ID);
 
         const response = await axios.post(
             "https://api.vapi.ai/call",
@@ -95,7 +99,7 @@ const connectToAIAgent = async () => {
                 assistantId: VAPI_ASSISTANT_ID,
                 phoneNumberId: VAPI_PHONE_NUMBER_ID,
                 customer: {
-                    number: "+12077100714"
+                    number: `+${customerNumber}`
                 }
             },
             {
@@ -114,6 +118,8 @@ const connectToAIAgent = async () => {
         return { success: false, error: error.response?.data || error.message };
     }
 };
+
+
 
 const app = express();
 app.use(express.json());
@@ -246,8 +252,12 @@ app.post("/webhook", async (req, res) => {
                     else if (text && text.includes("3")) {
                         replyMessage = "📢 You want to SELL property.\n\nSend:\nLocation + Property Type";
                     }
-                    else if (text && text.includes("4") || buttonPayload === "TALK_TO_AGENT") {
+                    else if ((text && text.includes("4")) || buttonPayload === "TALK_TO_AGENT") {
+                        console.log("🔥 USER PRESSED 4");
+
                         const result = await connectToAIAgent(from);
+
+                        console.log("🔥 AI CALL RESULT:", result);
 
                         if (!result.success) {
                             await sendWhatsAppMessage(
